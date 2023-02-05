@@ -116,6 +116,8 @@ describe('Helper', function () {
       balance6String = await balance6.toString();
       expect(balance6String).to.equal("2");
       expect(await anyToken.balanceOf(wallet6.address)).to.equal(0);
+
+      await expect(helper.connect(owner).swapForMatic(wallet6.address, 2, 2)).to.be.revertedWith("ERC20: transfer amount exceeds balance")
     });
   });
 
