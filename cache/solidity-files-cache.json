@@ -551,8 +551,8 @@
       ]
     },
     "/Users/emilianopontoro/Documents/git/transfer-helper/contracts/Helper.sol": {
-      "lastModificationDate": 1674918446042,
-      "contentHash": "78ecb27e53fbbc7d945b1b5f5ff7c65a",
+      "lastModificationDate": 1675608083648,
+      "contentHash": "05c8f5713d64866bf20114ec62a0b6f9",
       "sourceName": "contracts/Helper.sol",
       "solcConfig": {
         "version": "0.8.17",

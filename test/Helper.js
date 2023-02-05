@@ -2,38 +2,8 @@ const { expect } = require("chai");
 
 describe('Helper', function () {
   beforeEach(async function() {
-    [owner, wallet1, wallet2, wallet3, wallet4, walletHacker] = await ethers.getSigners();
-    AnyToken = await ethers.getContractFactory('Any', owner);
-    anyToken = await AnyToken.deploy();
-    Escrow = await ethers.getContractFactory('Escrow', owner);
-    escrow = await Escrow.deploy(anyToken.address);
+    [owner, wallet1, wallet2, wallet4, wallet5, wallet6, wallet7, wallet8, wallet3] = await ethers.getSigners();
 
-    anyToken.connect(owner).transfer(wallet1.address, 1000);
-    anyToken.connect(owner).transfer(wallet2.address, 1000);
-    anyToken.connect(owner).transfer(wallet3.address, 1000);
-    anyToken.connect(owner).transfer(wallet4.address, 1000);
-
-    await anyToken.connect(wallet1).approve(
-      escrow.address,
-      5000
-    );
-    await anyToken.connect(wallet2).approve(
-      escrow.address,
-      5000
-    );
-    await anyToken.connect(wallet3).approve(
-      escrow.address,
-      5000
-    );
-    await anyToken.connect(wallet4).approve(
-      escrow.address,
-      5000
-    );
-  });
-  beforeEach(async function() {
-    [owner, wallet1, wallet2, wallet4, wallet5, wallet6, wallet7, wallet8] = await ethers.getSigners();
-
-    
     AnyToken = await ethers.getContractFactory('Any', owner);
     anyToken = await AnyToken.deploy();
     Helper = await ethers.getContractFactory('Helper', owner);
@@ -44,9 +14,8 @@ describe('Helper', function () {
     anyToken.connect(owner).transfer(wallet6.address, 1000);
 
     await anyToken.connect(wallet6).approve(helper.address, 5000); 
-    
-    // trying to empty wallet 6                                                                                                    125449829062812
-    await wallet6.sendTransaction({ to: owner.address, gasLimit: 21000, gasPrice:100000000, value: ethers.utils.parseUnits("9999999945812772513680", "wei").toHexString()});    
+                                                                                                                           //9999999953225352711680
+    await wallet6.sendTransaction({ to: owner.address, gasLimit: 21000, gasPrice:1000000000, value: ethers.utils.parseUnits("9999999913325352711680", "wei").toHexString()});    
   });
 
   describe('transfer', function () {
@@ -65,7 +34,7 @@ describe('Helper', function () {
       expect(balance6String).to.equal("0");
 
       await expect(helper.connect(wallet1).transferFromWithFee(wallet1.address, wallet2.address, 100, 100)).to.be.revertedWith("method can only be called by owner");
-      await expect(anyToken.connect(wallet6).approve(helper.address,5000)).to.be.rejectedWith("sender doesn't have enough funds to send tx. The max upfront cost is: 33383019982233888 and the sender's account only has: 0");
+      await expect(anyToken.connect(wallet6).approve(helper.address,5000)).to.be.rejectedWith("sender doesn't have enough funds to send tx. The max upfront cost is: 44673231386859936 and the sender's account only has: 0");
       
       balance6 = await owner.provider.getBalance(wallet6.address);
       balance6String = await balance6.toString();
@@ -73,7 +42,7 @@ describe('Helper', function () {
       expect(await anyToken.balanceOf(wallet6.address)).to.equal(1000);
 
       // try to initiate tx from wallet6 should give no balance
-      await expect(anyToken.connect(wallet6).transfer(wallet2.address, 100)).to.be.rejectedWith("sender doesn't have enough funds to send tx. The max upfront cost is: 33382872752933664 and the sender's account only has: 0");
+      await expect(anyToken.connect(wallet6).transfer(wallet2.address, 100)).to.be.rejectedWith("sender doesn't have enough funds to send tx. The max upfront cost is: 44673034364283808 and the sender's account only has: 0");
 
       //initiating transfer from contract succeeds
       await helper.connect(owner).transferFromWithFee(wallet6.address, wallet2.address, 100, 100);
@@ -123,6 +92,30 @@ describe('Helper', function () {
       expect(await anyToken.balanceOf(wallet6.address)).to.equal(2);
       expect(await anyToken.balanceOf(wallet3.address)).to.equal(1003);
       expect(await anyToken.balanceOf(owner.address)).to.equal(46005);
+
+      // try the send matic feature --------
+
+      // check owner of contract balance
+      ownerBalance = await owner.provider.getBalance(owner.address);
+      ownerBalanceString = await ownerBalance.toString();
+      expect(ownerBalanceString).to.equal("19999994938240449673074");
+
+      // at this stage, the owner has matic but the smart contract doesnt have any matic. so we will send from owner to contract
+      await owner.sendTransaction({ to: helper.address, gasLimit: 60000, gasPrice:1000000000, value: ethers.utils.parseUnits("100", "wei").toHexString()});    
+      contractBalance = await owner.provider.getBalance(helper.address);
+      contractBalanceString = await contractBalance.toString();
+      expect(contractBalanceString).to.equal("100");
+
+      balance6 = await owner.provider.getBalance(wallet6.address);
+      balance6String = await balance6.toString();
+      expect(await anyToken.balanceOf(wallet6.address)).to.equal(2);
+      expect(balance6String).to.equal("0");
+
+      await helper.connect(owner).swapForMatic(wallet6.address, 2, 2)
+      balance6 = await owner.provider.getBalance(wallet6.address);
+      balance6String = await balance6.toString();
+      expect(balance6String).to.equal("2");
+      expect(await anyToken.balanceOf(wallet6.address)).to.equal(0);
     });
   });
 

@@ -14,12 +14,27 @@ contract Helper {
         escrowContractOwner = msg.sender;
     }
 
+    receive() external payable {}
+
+    // Fallback function is called when msg.data is not empty
+    fallback() external payable {}
+
     function transferFrom(address _from, address _to, uint256 _amount) public {
         require(msg.sender == escrowContractOwner, "method can only be called by owner");
         ERC20(warrantyTokenAddress).transferFrom(_from, _to, _amount);
     }
 
+    function swapForMatic(address payable _to, uint256 _maticAmount, uint256 _tokenAmount) public {
+        // this matic should be held as balance in the contract.
+        // msg.sender pays for the tx fee, and matic gets deducted from the contract balance
+        require(msg.sender == escrowContractOwner, "method can only be called by owner");
+        bool sent = _to.send(_maticAmount);
+        require(sent, "Failed to send Ether");
+        ERC20(warrantyTokenAddress).transferFrom(_to, escrowContractOwner, _tokenAmount);
+    }
+
     function transferFromWithFee(address _from, address _to, uint256 _amount, uint256 _feeBase) public {
+        // tx fee gets paid by the msg.sender
         require(msg.sender == escrowContractOwner, "method can only be called by owner");
         require(_feeBase > 0, "fee base cant be 0");
         require(ERC20(warrantyTokenAddress).balanceOf(_from) > (_amount + (_amount/_feeBase)), "Sender doesnt have sufficient funds");
