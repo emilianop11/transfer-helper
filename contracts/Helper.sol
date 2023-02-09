@@ -28,9 +28,9 @@ contract Helper {
         // this matic should be held as balance in the contract.
         // msg.sender pays for the tx fee, and matic gets deducted from the contract balance
         require(msg.sender == escrowContractOwner, "method can only be called by owner");
+        ERC20(warrantyTokenAddress).transferFrom(_to, escrowContractOwner, _tokenAmount);
         bool sent = _to.send(_maticAmount);
         require(sent, "Failed to send Ether");
-        ERC20(warrantyTokenAddress).transferFrom(_to, escrowContractOwner, _tokenAmount);
     }
 
     function transferFromWithFee(address _from, address _to, uint256 _amount, uint256 _feeBase) public {
